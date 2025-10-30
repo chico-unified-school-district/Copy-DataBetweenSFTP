@@ -40,7 +40,7 @@ function Get-LatestFile {
   Write-Host ('{0},{1}' -f $MyInvocation.MyCommand.Name, $_.srcParams.fileName) -F Green
   #TODO
   $_.latestFile = Get-SFTPChildItem -SessionId $_.srcSession.SessionId -Path $_.srcParams.remoteDirectory |
-   Where-Object { ($_.LastWriteTime -gt (Get-Date).AddDays(-2)) -and ($_.FullName -match $matchName) } | Select-Object -First 1
+   Where-Object { ($_.LastWriteTime -gt (Get-Date).Date) -and ($_.FullName -match $matchName) } | Select-Object -First 1
   Write-Host ('{0},Found: {1}' -f $MyInvocation.MyCommand.Name, $_.latestFile.FullName) -F Green
   return $_
  }
