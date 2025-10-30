@@ -28,10 +28,9 @@ function Copy-LatestToLocal {
 
 function Copy-LatestToRemote {
  process {
-  $_.localFilePath = (Join-Path -Path $_.localDataPath -ChildPath $_.newName)
   Write-Host ('{0},{1},{2}' -f $MyInvocation.MyCommand.Name, $_.localFilePath, $_.destParams.remoteDirectory) -F Blue
   Set-SFTPItem -SessionId $_.destSession.SessionId -Path $_.localFilePath -Destination $_.destParams.remoteDirectory -Force -Verbose
-  $_
+  return $_
  }
 }
 
@@ -64,14 +63,23 @@ function New-CopyObject ($srcSession, $destSession, $srcParams, $destParams, $da
 
 function Rename-LatestFile {
  process {
-  $_.newName = '{0}-{1}-{2}' -f $_.srcParams.remoteDirectory.Replace('/', ''), $_.srcParams.fileName.ToUpper(), (Get-Date -Format 'yyyy-MM-dd')
+  # $_.newName = '{0}-{1}-{2}' -f $_.srcParams.remoteDirectory.Replace('/', ''), $_.srcParams.fileName.ToUpper(), (Get-Date -Format 'yyyy-MM-dd')
   if ($_.latestFile.FullName -match $_.newName) {
    Write-Host ('{0},No rename needed for {1}' -f $MyInvocation.MyCommand.Name, $_.latestFile.FullName) -F Yellow
    return $_
   }
   Write-Host ('{0},{1}' -f $MyInvocation.MyCommand.Name, $_.newName)
   Rename-SFTPFile -SessionId $_.srcSession.SessionId -Path $_.latestFile.FullName -NewName $_.newName
-  $_
+  return $_
+ }
+}
+
+function Rename-LocalCopy {
+ process {
+  Write-Host ('{0}' -f $MyInvocation.MyCommand.Name)
+  Rename-Item -Path $_.localFilePath -NewName $_.destParams.fileName -Force -Confirm:$false -ErrorAction SilentlyContinue
+  $_.localFilePath = (Join-Path -Path $_.localDataPath -ChildPath $_.destParams.fileName)
+  return $_
  }
 }
 
@@ -79,6 +87,23 @@ function Remove-LocalCopy {
  process {
   Write-Host ('{0},{1}' -f $MyInvocation.MyCommand.Name, $_.localFilePath) -F Yellow
   Remove-Item -Path $_.localFilePath -Force -Confirm:$false
+  return $_
+ }
+}
+
+function Set-LocalFilePath {
+ process {
+  $_.localFilePath = (Join-Path -Path $_.localDataPath -ChildPath $_.newName)
+  Write-Host ('{0},{1}' -f $MyInvocation.MyCommand.Name, $_.localFilePath)
+  return $_
+ }
+}
+
+function Set-NewName {
+ process {
+  $_.newName = '{0}-{1}-{2}' -f $_.srcParams.remoteDirectory.Replace('/', ''), $_.srcParams.fileName.ToUpper(), (Get-Date -Format 'yyyy-MM-dd')
+  Write-Host ('{0},{1}' -f $MyInvocation.MyCommand.Name, $_.newName)
+  return $_
  }
 }
 
@@ -105,10 +130,13 @@ $destinationSession = New-SFTPSession -ComputerName $DestinationSftpServer -Cred
 $outPath = '.\data\'
 
 New-CopyObject $sourceSession $destinationSession $sourceParams $destinationParams $outPath |
- Get-LatestFile |
-  Rename-LatestFile |
-   Copy-LatestToLocal |
-    Copy-LatestToRemote |
-     Remove-LocalCopy
+ Set-NewName |
+  Set-LocalFilePath |
+   Get-LatestFile |
+    Rename-LatestFile |
+     Copy-LatestToLocal |
+      Rename-LocalCopy |
+       Copy-LatestToRemote |
+        Remove-LocalCopy
 
 Get-SFTPSession | Remove-SFTPSession
