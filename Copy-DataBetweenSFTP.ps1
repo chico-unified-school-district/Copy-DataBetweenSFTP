@@ -76,9 +76,10 @@ function Rename-LatestFile {
 
 function Rename-LocalCopy {
  process {
-  Write-Host ('{0}' -f $MyInvocation.MyCommand.Name)
+  Write-Host ('{0},{1},{2}' -f $MyInvocation.MyCommand.Name, $_.localFilePath, $_.destParams.fileName) -F Magenta
   Rename-Item -Path $_.localFilePath -NewName $_.destParams.fileName -Force -Confirm:$false -ErrorAction SilentlyContinue
   $_.localFilePath = (Join-Path -Path $_.localDataPath -ChildPath $_.destParams.fileName)
+  Write-Host ('{0},Updating $_.localFilePath parameter: {1}' -f $MyInvocation.MyCommand.Name, $_.localFilePath) -f Magenta
   return $_
  }
 }
@@ -94,7 +95,7 @@ function Remove-LocalCopy {
 function Set-LocalFilePath {
  process {
   $_.localFilePath = (Join-Path -Path $_.localDataPath -ChildPath $_.newName)
-  Write-Host ('{0},{1}' -f $MyInvocation.MyCommand.Name, $_.localFilePath)
+  Write-Host ('{0},{1}' -f $MyInvocation.MyCommand.Name, $_.localFilePath) -F DarkGreen
   return $_
  }
 }
@@ -102,7 +103,7 @@ function Set-LocalFilePath {
 function Set-NewName {
  process {
   $_.newName = '{0}-{1}-{2}' -f $_.srcParams.remoteDirectory.Replace('/', ''), $_.srcParams.fileName.ToUpper(), (Get-Date -Format 'yyyy-MM-dd')
-  Write-Host ('{0},{1}' -f $MyInvocation.MyCommand.Name, $_.newName)
+  Write-Host ('{0},{1}' -f $MyInvocation.MyCommand.Name, $_.newName) -F DarkGreen
   return $_
  }
 }
