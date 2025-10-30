@@ -88,7 +88,7 @@ function Remove-LocalCopy {
  process {
   Write-Host ('{0},{1}' -f $MyInvocation.MyCommand.Name, $_.localFilePath) -F Yellow
   Remove-Item -Path $_.localFilePath -Force -Confirm:$false
-  return $_
+  # return $_
  }
 }
 
