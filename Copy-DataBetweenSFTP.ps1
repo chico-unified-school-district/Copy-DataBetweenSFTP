@@ -38,9 +38,13 @@ function Get-LatestFile {
  process {
   [string]$matchName = $_.srcParams.fileName
   Write-Host ('{0},{1}' -f $MyInvocation.MyCommand.Name, $_.srcParams.fileName) -F Green
-  #TODO
   $_.latestFile = Get-SFTPChildItem -SessionId $_.srcSession.SessionId -Path $_.srcParams.remoteDirectory |
-   Where-Object { ($_.LastWriteTime -gt (Get-Date).Date) -and ($_.FullName -match $matchName) } | Select-Object -First 1
+   Where-Object { $_.FullName -match $matchName } | Sort-Object -Descending LastWriteTime | Select-Object -First 1
+  # Where-Object { ($_.LastWriteTime -gt (Get-Date).Date) -and ($_.FullName -match $matchName) } | Select-Object -First 1
+  if (!$_.latestFile) {
+   Write-Host ('{0},No file found matching {1} in {2}' -f $MyInvocation.MyCommand.Name, $matchName, $_.srcParams.remoteDirectory) -F Red
+   return
+  }
   Write-Host ('{0},Found: {1}' -f $MyInvocation.MyCommand.Name, $_.latestFile.FullName) -F Green
   return $_
  }
